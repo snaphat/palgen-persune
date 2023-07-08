@@ -589,15 +589,36 @@ if (args.output is not None):
     with open(args.output, mode="wb") as Palette_file:
         Palette_file.write(np.uint8(np.around(RGB_buffer * 0xFF)))
 
+i = 0
+emphasis = 0
+entry = 0
+names = ['No', 'Red', 'Green', 'Green Red', 'Blue', 'Blue Red', 'Blue Green', 'Blue Green Red']
+
 if (args.html_hex):
     for luma in range(luma_range):
-        for hue in range(16):
-            print(
-                "#{0:02X}{1:02X}{2:02X}".format(
-                    np.uint8(np.around(RGB_buffer[luma, hue, 0] * 0xFF)),
-                    np.uint8(np.around(RGB_buffer[luma, hue, 1] * 0xFF)),
-                    np.uint8(np.around(RGB_buffer[luma, hue, 2] * 0xFF))))
+
         print("")
+        if i % 4 == 0:
+            print('        // NES palette (emphasis = {0:03b}) - {1} Emphasis'.format(emphasis, names[emphasis]))
+            print('        public static Color32[] LUT_{0:03b} = new Color32[]'.format(emphasis))
+            print('        {')
+            emphasis += 1
+
+        for hue in range(16):
+            color = "new Color32({0}, {1}, {2}, 255)".format(
+                        np.uint8(np.around(RGB_buffer[luma, hue, 0] * 0xFF)),
+                        np.uint8(np.around(RGB_buffer[luma, hue, 1] * 0xFF)),
+                        np.uint8(np.around(RGB_buffer[luma, hue, 2] * 0xFF)))
+            if entry & 0x3F != 0x3F:
+                color += ','
+            count = "// 0x{0:02X}".format(entry & 0x3F)
+            color = "    {: <33}{}".format(color, count)
+            print("        " + color)
+            
+            entry += 1
+        if i % 4 == 3:
+            print('        };')
+        i += 1
 
 if (args.wiki_table):
     print("{|class=\"wikitable\"")
